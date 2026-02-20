@@ -1,2 +1,5 @@
-package com.iglu.iglulivery.enums;public enum OrderStatus {
+package com.iglu.iglulivery.enums;
+
+public enum OrderStatus {
+    PENDING, ACCEPTED, PICKED_UP, DELIVERED
 }
