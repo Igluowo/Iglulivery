@@ -35,7 +35,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getAllOrders());
     }
 
-    @GetMapping
+    @GetMapping("/available")
     public ResponseEntity<List<OrderDTO>> getAvailableOrders() {
         List<OrderDTO> orders = orderService.getAvailableOrders();
         return ResponseEntity.ok(orders);
@@ -52,9 +52,8 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/accept")
-    public ResponseEntity<OrderDTO> acceptOrder(@PathVariable Long id, Authentication authentication) {
-        String userEmail = authentication.name();
-        OrderDTO updatedOrder = orderService.assignOrder(id, userEmail);
+    public ResponseEntity<OrderDTO> acceptOrder(@PathVariable Long id) {
+        OrderDTO updatedOrder = orderService.assignOrder(id);
         return ResponseEntity.ok(updatedOrder);
     }
 }

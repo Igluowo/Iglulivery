@@ -7,13 +7,12 @@ import com.iglu.iglulivery.enums.OrderStatus;
 import com.iglu.iglulivery.repositories.OrderRepository;
 import com.iglu.iglulivery.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 @Service
 public class OrderService {
@@ -24,12 +23,15 @@ public class OrderService {
     private UserRepository userRepository;
 
     public OrderDTO createOrder(OrderDTO order) {
+        String email = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
         Order newOrder = new Order();
         newOrder.setCustomerName(order.getCustomerName());
         newOrder.setDeliveryAddress(order.getDeliveryAddress());
         newOrder.setStatus(OrderStatus.PENDING);
         newOrder.setDeliveryLongitude(order.getDeliveryLongitude());
         newOrder.setDeliveryLatitude(order.getDeliveryLatitude());
+        newOrder.setDeliveryPerson(user);
         orderRepository.save(newOrder);
         return mapToDTO(newOrder);
     }
@@ -59,12 +61,13 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO assignOrder(Long orderId, String driverId) {
+    public OrderDTO assignOrder(Long orderId) {
+        String driverEmail = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication()).getName();
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("Order not found"));
         if (!OrderStatus.PENDING.equals(order.getStatus())) {
             throw new RuntimeException("Sorry! This order was take for other driver!");
         }
-        User driver = userRepository.findByEmail(driverId).orElseThrow(() -> new RuntimeException("User not found"));
+        User driver = userRepository.findByEmail(driverEmail).orElseThrow(() -> new RuntimeException("User not found"));
 
         order.setDeliveryPerson(driver);
         order.setStatus(OrderStatus.ACCEPTED);
@@ -81,6 +84,7 @@ public class OrderService {
         dto.setDeliveryAddress(order.getDeliveryAddress());
         dto.setDeliveryLatitude(order.getDeliveryLatitude());
         dto.setDeliveryLongitude(order.getDeliveryLongitude());
+        dto.setStatus(OrderStatus.valueOf(order.getStatus().name()));
         return dto;
     }
 
